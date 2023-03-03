@@ -1,0 +1,138 @@
+# docker volume create data_volume
+# by default this will create the volume on /var/lib/docker/volumes/data_volume
+# need to check how to change this
+
+# docker run -v data_volume:/var/lib/mysql mysql
+# if data_volume doesn't exist it creates and mounts it
+# in the projects context it will be:
+# docker run -v /home/lprates/data/mariadb_volume:/var/lib/mariadb mariadb
+# docker run --mount type=bind,source=/home/lprates/data/wordpress_volume,target=/var/lib/wordpress wordpress
+
+# docker run : -d -> flag to run in the background; --name="name" to name the container; -p to select the port "to-port":"from-port" 
+
+# docker-compose: build field builds the dockerfile within the folder into a temp image and runs it
+version: '3.7'
+
+# unsure about the bridge definition
+networks:
+  inception:
+    driver: bridge
+  #front-end:
+  #  driver: bridge
+  #back-end:
+  #  driver: bridge
+
+services:
+  mariadb:
+    environment:
+      - MARIADB_ROOT_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_USER
+      - MARIADB_USER_PASSWORD
+      - MARIADB_PORT
+      - MARIADB_HOST
+      - WORDPRESS_DB_NAME
+    build: requirements/mariadb
+    image: mariadb:mine
+    container_name: mariadb
+    init: true
+    restart: on-failure
+    expose:
+      - 3306
+    networks:
+      #- back-end
+      - inception
+    healthcheck: # https://medium.com/geekculture/how-to-successfully-implement-a-healthcheck-in-docker-compose-efced60bc08e
+      #test: [ 'CMD', 'mysqladmin', 'ping', '--silent', '-u', '${MARIADB_USER}', '-p${MARIADB_USER_PASSWORD}' ]
+      # mysql --user=root --password=${MARIADB_ROOT_PASSWORD} --execute "SELECT User, Host FROM mysql.user WHERE User='${MARIADB_USER}' AND Host='%'; FLUSH PRIVILEGES;" ${MARIADB_DATABASE}
+      test: [ "CMD-SHELL", "mysql --user=root --password=${MARIADB_ROOT_PASSWORD} --execute \"SELECT User, Host FROM mysql.user WHERE User='${MARIADB_USER}' AND Host='%'; FLUSH PRIVILEGES;\" ${WORDPRESS_DB_NAME}" ]
+      start_period: 1m
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - mariadb_vol:/var/lib/mysql
+
+  nginx:
+    environment:
+      - DOMAIN_NAME
+      - WORDPRESS_PORT
+    build: requirements/nginx
+    image: nginx:mine
+    container_name: nginx
+    init: true
+    restart: on-failure
+    networks:
+      #- front-end
+      #- back-end
+      - inception
+    ports:
+      - '443:443'
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    volumes:
+      - wordpress_vol:/var/www/html/
+      - nginx_logs_vol:/var/log/nginx
+    
+  wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
+    image: wordpress:mine
+    environment:
+      - WORDPRESS_URL
+      - WORDPRESS_TITLE
+      - WORDPRESS_USER_NAME
+      - WORDPRESS_USER_PASSWORD
+      - WORDPRESS_USER_EMAIL
+      - WORDPRESS_ADMIN_NAME
+      - WORDPRESS_ADMIN_PASSWORD
+      - WORDPRESS_ADMIN_EMAIL
+      - WORDPRESS_DB_NAME
+      - WORDPRESS_PORT
+      - MARIADB_ROOT_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_USER
+      - MARIADB_USER_PASSWORD
+      - MARIADB_PORT
+      - MARIADB_HOST
+      - MARIADB_CONTAINER
+    init: true
+    restart: on-failure
+    expose:
+      - 9000
+    networks:
+      #- back-end
+      - inception
+    healthcheck:
+      test: ["CMD-SHELL", "if [ ! -f /usr/local/bin/.docker-entrypoint-finished ]; then exit 1; fi"]
+      start_period: 1m
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      mariadb:
+        #condition: service_started
+        condition: service_healthy
+    volumes:
+      - wordpress_vol:/var/www/html/
+
+volumes:
+  mariadb_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${VOLUME_MARIADB_PATH:?}
+      o: bind
+  wordpress_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${DIR_USERNAME}/data/wordpress_volume
+      o: bind
+  nginx_logs_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/${DIR_USERNAME}/data/logs/nginx
+      o: bind
