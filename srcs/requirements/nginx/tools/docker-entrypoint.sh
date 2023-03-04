@@ -3,7 +3,6 @@
 # substitutes env vars and creates a file with the result
 #
 cat /etc/nginx/wordpress.conf.template | envsubst '$DOMAIN_NAME' > /etc/nginx/sites-available/wordpress.conf
-#sed -ie s/'$DOMAIN_NAME'/$DOMAIN_NAME/g /etc/nginx/sites-available/wordpress.conf
 
 # nginx.conf has the global defined configs setup
 # shouldn't be changed unless necessary

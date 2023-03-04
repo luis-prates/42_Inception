@@ -1,9 +1,19 @@
-#FROM alpine:3.16
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Dockerfile                                         :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: lprates <lprates@student.42lisboa.com>     +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/03/04 06:03:32 by lprates           #+#    #+#              #
+#    Updated: 2023/03/04 06:03:32 by lprates          ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
 FROM debian:buster
 
 ARG	WORDPRESS_VERSION=5.8.3
 
-# change this for wordpress
 RUN apt-get update && apt-get install -y \
 	gettext \
 	php7.3 \
@@ -43,27 +53,16 @@ RUN addgroup --system wordpress_server \
 # - copy the config file to container root as a template file
 COPY ./conf/www.conf /www.conf.tmpl
 
-#RUN rm -f /etc/php/7.3/fpm/pool.d/www.conf
-
 WORKDIR /var/www/html/wordpress
 
 RUN wp core download --allow-root --version=$WORDPRESS_VERSION
 
-#WORKDIR /usr/local/bin/
-
-#RUN wget https://wordpress.org/wordpress-5.8.3.tar.gz \
-#	&& tar -xvzf wordpress-5.8.3.tar.gz \
-#	&& rm -rf wordpress-5.8.3.tar.gz
-
 COPY tools/docker-entrypoint.sh /usr/local/bin/
-COPY tools/wp-config.php /wp-config.php.template
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN rm -f /etc/php/7.3/fpm/pool.d/www.conf
 
-
 ENTRYPOINT [ "docker-entrypoint.sh" ]
-
 
 CMD [ "/usr/sbin/php-fpm7.3", "-F" ]

@@ -17,10 +17,10 @@ if [ ! -d /var/lib/mysql/$WORDPRESS_DB_NAME ]
 then
 service mysql start
 
-#UPDATE mysql.user SET plugin='mysql_native_password' WHERE user='root' AND host='localhost';
 # https://bertvv.github.io/notes-to-self/2015/11/16/automating-mysql_secure_installation/
 mysql --user=root <<EOF
 UPDATE mysql.user SET Password=PASSWORD('$MARIADB_ROOT_PASSWORD') WHERE User='root';
+UPDATE mysql.user SET plugin='mysql_native_password' WHERE user='root' AND host='localhost';
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
@@ -36,8 +36,5 @@ EOF
 
 service mysql stop
 fi
-
-#sleep 15
-echo "Updated root password 3!"
 
 exec "$@"

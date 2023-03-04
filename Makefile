@@ -9,6 +9,7 @@ TOOLS = ./srcs/requirements/tools
 all:	persistent_storage
 	@docker compose -f $(DCOMPOSE_FILE) --env-file $(ENV_FILE) up -d
 	@sudo sed -i '/42.fr/d' /etc/hosts
+	@chmod +x $(TOOLS)/hosts.sh
 	@$(TOOLS)/hosts.sh $(DOMAIN_USER)
 
 clean:
