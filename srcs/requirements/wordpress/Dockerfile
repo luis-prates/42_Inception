@@ -34,6 +34,9 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& mkdir /run/php
 
+# - downloads the wordpress command line interface and
+# - gives execution permission to where it's downloaded at
+
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
 	--output-document=/usr/local/bin/wp \
   && chmod +x /usr/local/bin/wp
@@ -44,8 +47,6 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
 RUN mkdir -p /run/php /var/www/html/wordpress \
   && chmod -R 755 /var/www/html/
 
-# https://askubuntu.com/questions/873839/what-is-the-www-data-user
-
 # - add the "wordpress_server" group and user
 RUN addgroup --system wordpress_server \
   && adduser --system wordpress_server
@@ -53,14 +54,19 @@ RUN addgroup --system wordpress_server \
 # - copy the config file to container root as a template file
 COPY ./conf/www.conf /www.conf.tmpl
 
+# - Sets the working directory where I want to download wp core
 WORKDIR /var/www/html/wordpress
 
+# - downloads wp core
 RUN wp core download --allow-root --version=$WORDPRESS_VERSION
 
+# - copies the entrypoint script
 COPY tools/docker-entrypoint.sh /usr/local/bin/
 
+# - sets the execution permission to the entrypoint script
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# - removes default www.conf
 RUN rm -f /etc/php/7.3/fpm/pool.d/www.conf
 
 ENTRYPOINT [ "docker-entrypoint.sh" ]

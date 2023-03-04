@@ -8,7 +8,6 @@ services:
   mariadb:
     environment:
       - MARIADB_ROOT_PASSWORD
-      - MARIADB_DATABASE
       - MARIADB_USER
       - MARIADB_USER_PASSWORD
       - MARIADB_PORT
@@ -68,7 +67,6 @@ services:
       - WORDPRESS_DB_NAME
       - WORDPRESS_PORT
       - MARIADB_ROOT_PASSWORD
-      - MARIADB_DATABASE
       - MARIADB_USER
       - MARIADB_USER_PASSWORD
       - MARIADB_PORT

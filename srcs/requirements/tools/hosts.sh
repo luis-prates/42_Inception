@@ -11,8 +11,6 @@ if [ $1 ]; then
 
 	# sets the different domains to the hosts file to allow access
 	sudo echo "$NGINX_IP $DOMAIN_USER.42.fr" | sudo tee -a /etc/hosts 1>/dev/null
-	#sudo echo "$NGINX_IP www.$DOMAIN_USER.42.fr" | sudo tee -a /etc/hosts 1>/dev/null
-	#sudo echo "$NGINX_IP https://$DOMAIN_USER.42.fr" | sudo tee -a /etc/hosts 1>/dev/null
 else
 	echo "This script should only be ran from the Makefile with the proper Domain Name set!"
 fi

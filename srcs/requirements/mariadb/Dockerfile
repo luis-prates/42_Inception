@@ -18,8 +18,10 @@ RUN apt-get update \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# - copies the entrypoint script
 COPY ./tools/docker-entrypoint.sh /usr/local/bin/
 
+# - sets the execution permission to the entrypoint script
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT [ "docker-entrypoint.sh" ]
